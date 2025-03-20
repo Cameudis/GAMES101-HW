@@ -2,7 +2,9 @@
 #include "rasterizer.hpp"
 #include <eigen3/Eigen/Eigen>
 #include <iostream>
-#include <opencv2/opencv.hpp>
+// #include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/opencv.hpp>
+#include <cmath>
 
 constexpr double MY_PI = 3.1415926;
 
@@ -27,6 +29,13 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
     // Create the model matrix for rotating the triangle around the Z axis.
     // Then return it.
 
+    double angle = rotation_angle / 180 * MY_PI;
+
+    model << cos(angle), -sin(angle), 0, 0,
+            sin(angle), cos(angle), 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
+
     return model;
 }
 
@@ -40,6 +49,15 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     // TODO: Implement this function
     // Create the projection matrix for the given parameters.
     // Then return it.
+
+    double angle = eye_fov / 2 / 180 * MY_PI;
+    double tsubb = tan(angle) * zFar;
+    double rsubl = tsubb * aspect_ratio;
+
+    projection << 2 * zNear / rsubl, 0, 0, 0,
+                0, 2 * zNear / tsubb, 0, 0,
+                0, 0, (zNear + zFar) / (zNear - zFar), -2 * zNear * zFar / (zNear - zFar),
+                0, 0, 1, 0;
 
     return projection;
 }
@@ -77,7 +95,7 @@ int main(int argc, const char** argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
+        r.set_projection(get_projection_matrix(45, 1, 0.1, 3));
 
         r.draw(pos_id, ind_id, rst::Primitive::Triangle);
         cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
@@ -93,7 +111,7 @@ int main(int argc, const char** argv)
 
         r.set_model(get_model_matrix(angle));
         r.set_view(get_view_matrix(eye_pos));
-        r.set_projection(get_projection_matrix(45, 1, 0.1, 50));
+        r.set_projection(get_projection_matrix(45, 1, 0.1, 3));
 
         r.draw(pos_id, ind_id, rst::Primitive::Triangle);
 
